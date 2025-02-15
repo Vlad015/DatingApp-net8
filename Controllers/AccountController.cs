@@ -46,8 +46,10 @@ namespace API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>>Login(LoginDto loginDto)
         {
-            var user=await context.Users.FirstOrDefaultAsync(x=> x.Username==loginDto.Username);
-            if(user==null)
+            var user = await context.Users
+                .Include(u => u.Photos) // Ensure photos are loaded
+    .           FirstOrDefaultAsync(x => x.Username == loginDto.Username);
+            if (user==null)
                 return Unauthorized("Invalid username");
             using var hmac =new HMACSHA512(user.PasswordSalt);
             var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password));
@@ -57,9 +59,10 @@ namespace API.Controllers
             }
             return new UserDto
             {
-                Username=user.Username,
-                Token = tokenService.CreateToken(user)
-            }; 
+                Username = user.Username,
+                Token = tokenService.CreateToken(user),
+                PhotoUrl = user.Photos.FirstOrDefault(x => x.IsMain)?.Url
+            };
         }
     }
 }

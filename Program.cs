@@ -8,11 +8,11 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using API.Extensions;
 using API.Middleware;
+using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddApplicationServices(builder.Configuration);
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

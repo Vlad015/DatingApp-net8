@@ -3,6 +3,7 @@ using API.Dto;
 using API.Entities;
 using API.Interfaces;
 using API.NewFolder;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,29 +15,32 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AccountController(AppDbContext context, ITokenService tokenService): ControllerBase
+    public class AccountController(AppDbContext context, ITokenService tokenService, IMapper mapper): ControllerBase
     {
         [HttpPost("register")]// account/register
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto )
         {
             if (await UserExists(registerDto.Username))
                 return BadRequest("Username is taken");
-            return Ok();
 
-            //using var hmac = new HMACSHA512();
-            //var user = new AppUser
-            //{
-            //    Username = registerDto.Username,
-            //    PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password)),
-            //    PasswordSalt = hmac.Key
-            //};
-            //context.Users.Add(user);
-            //await context.SaveChangesAsync();
-            //return new UserDto
-            //{
-            //    Username = user.Username,
-            //    Token = tokenService.CreateToken(user)
-            //};
+
+            using var hmac = new HMACSHA512();
+
+            var user = mapper.Map<AppUser>(registerDto);
+            user.Username = registerDto.Username;
+            user.PasswordHash=hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password));
+            user.PasswordSalt = hmac.Key;
+
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+
+            return new UserDto
+            {
+                Username = user.Username,
+                Token = tokenService.CreateToken(user),
+                Gender = user.Gender,
+                KnownAs=user.KnownAs
+            };
         }
 
         private async Task<bool> UserExists(string username)
@@ -60,7 +64,9 @@ namespace API.Controllers
             return new UserDto
             {
                 Username = user.Username,
+                KnownAs = user.KnownAs,
                 Token = tokenService.CreateToken(user),
+                Gender = user.Gender,
                 PhotoUrl = user.Photos.FirstOrDefault(x => x.IsMain)?.Url
             };
         }

@@ -2,6 +2,7 @@
 using API.Dto;
 using API.Entities;
 using API.Extensions;
+using API.Helpers;
 using API.Interfaces;
 using AutoMapper;
 using Azure.Identity;
@@ -16,14 +17,16 @@ namespace API.Controllers
     [Route("api/[controller]")]
     [Authorize]
     public class UserController(IUserRepository userRepository, IMapper mapper,
-        IPhotoService photoService) : ControllerBase
+        IPhotoService photoService) : BaseApiController
     {
         
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers([FromQuery]UserParams userParams)
         {
-            var users= await userRepository.GetMembersAsync();
-            
+            userParams.CurrentUsername= User.GetUsername();
+            var users= await userRepository.GetMembersAsync(userParams);
+
+            Response.AddPaginationHeader(users);
             
             return Ok(users);
         }
@@ -33,6 +36,7 @@ namespace API.Controllers
         public async Task <ActionResult<MemberDto>> GetUser(string username)
         {
             var user = await userRepository.GetMemberAsync(username);
+            
 
             if (user == null) return NotFound();
 
@@ -66,6 +70,7 @@ namespace API.Controllers
                 Url=result.SecureUrl.AbsoluteUri,
                 PublicId=result.PublicId,
             };
+            if (user.Photos.Count == 0) photo.IsMain = true;
             user.Photos.Add(photo);
             if(await userRepository.SaveAllAsync()) return CreatedAtAction(nameof(GetUser),
                 new {username =user.Username}, mapper.Map<PhotoDto>(photo)); 

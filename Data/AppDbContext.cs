@@ -8,6 +8,9 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<AppUser> Users { get; set; }
     public DbSet<Photo> Photos { get; set; } // Add the Photos DbSet
 
+    public DbSet<UserLike> Likes { get; set; }
+    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AppUser>()
@@ -18,5 +21,19 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
 
         modelBuilder.Entity<AppUser>().ToTable("users");
         modelBuilder.Entity<Photo>().ToTable("photos"); // Ensure photos table is mapped
+
+        modelBuilder.Entity<UserLike>()
+            .HasKey(k => new { k.SourceUserId, k.TargetUserId });
+        modelBuilder.Entity<UserLike>()
+             .HasOne(s => s.SourceUser)
+             .WithMany(l => l.LikedUsers)
+             .HasForeignKey(s => s.SourceUserId)
+             .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<UserLike>()
+            .HasOne(s=>s.TargetUser)
+            .WithMany(l=>l.LikedByUsers)
+            .HasForeignKey(s=>s.TargetUserId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

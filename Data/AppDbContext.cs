@@ -1,12 +1,13 @@
 ﻿using API.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Data;
 
-public class AppDbContext(DbContextOptions options) : DbContext(options)
+public class AppDbContext(DbContextOptions options) : IdentityDbContext<AppUser,AppRole, int,
+    IdentityUserClaim<int>, AppUserRole, IdentityUserLogin<int>, IdentityRoleClaim<int>, IdentityUserToken<int>>(options)
 {
-    public DbSet<AppUser> Users { get; set; }
-    public DbSet<Photo> Photos { get; set; } // Add the Photos DbSet
 
     public DbSet<UserLike> Likes { get; set; }
 
@@ -15,14 +16,29 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<AppUser>()
             .HasMany(u => u.Photos)
             .WithOne(p => p.AppUser)
             .HasForeignKey(p => p.AppUserId)
-            .OnDelete(DeleteBehavior.Cascade); // If user is deleted, delete their photos too
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<AppUser>().ToTable("users");
-        modelBuilder.Entity<Photo>().ToTable("photos"); // Ensure photos table is mapped
+        modelBuilder.Entity<Photo>().ToTable("photos"); 
+        modelBuilder.Entity<AppUser>()
+            .HasMany(ur=>ur.UserRoles)
+            .WithOne(u=>u.User)
+            .HasForeignKey(ur=>ur.UserId)
+            .IsRequired();
+
+        modelBuilder.Entity<AppRole>()
+            .HasMany(r => r.UserRoles)
+            .WithOne(ur => ur.Role)
+            .HasForeignKey(ur => ur.RoleId)
+            .IsRequired();
+
+        modelBuilder.Entity<AppUserRole>()
+        .HasKey(ur => new { ur.UserId, ur.RoleId });
 
         modelBuilder.Entity<UserLike>()
             .HasKey(k => new { k.SourceUserId, k.TargetUserId });

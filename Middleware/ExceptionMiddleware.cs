@@ -1,25 +1,37 @@
-﻿using API.Errors;
+﻿
 using System.Net;
 using System.Text.Json;
 
 namespace API.Middleware
 {
-    public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger, IHostEnvironment env)
+    public class ExceptionMiddleware
     {
+        private readonly RequestDelegate _next;
+        private readonly ILogger<ExceptionMiddleware> _logger;
+        private readonly IHostEnvironment _env;
+
+        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger, IHostEnvironment env)
+        {
+            _next = next;
+            _logger = logger;
+            _env = env;
+        }
+
         public async Task InvokeAsync(HttpContext context)
         {
             try
             {
-                await next(context);
+                await _next(context);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, ex.Message);
-                context.Response.ContentType = "application.json";
-                context.Response.StatusCode=(int)HttpStatusCode.InternalServerError;
+                _logger.LogError(ex, ex.Message);
+                context.Response.ContentType = "application/json";
+                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-                var response = env.IsDevelopment() ? new ApiException(context.Response.StatusCode, ex.Message, ex.StackTrace) :
-                    new ApiException(context.Response.StatusCode, ex.Message, "Internal server error");
+                var response = _env.IsDevelopment()
+                    ? new ApiException(context.Response.StatusCode, ex.Message, ex.StackTrace)
+                    : new ApiException(context.Response.StatusCode, "Internal server error");
 
                 var options = new JsonSerializerOptions
                 {

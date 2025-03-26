@@ -1,4 +1,5 @@
 ﻿using API.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,13 +9,11 @@ namespace API.Data
 {
     public class Seed
     {
-        public static async Task SeedUsers(AppDbContext context)
+        public static async Task SeedUsers(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager)
         {
-            Console.WriteLine("Seeding users..."); // Debugging step
 
-            if (await context.Users.AnyAsync())
+            if (await userManager.Users.AnyAsync())
             {
-                Console.WriteLine("Users already exist. Skipping seeding.");
                 return;
             }
 
@@ -22,35 +21,47 @@ namespace API.Data
 
             if (string.IsNullOrWhiteSpace(userData))
             {
-                Console.WriteLine("UserSeedData.json is empty or not found!");
                 return;
             }
 
-            Console.WriteLine("UserSeedData.json loaded successfully.");
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var users = JsonSerializer.Deserialize<List<AppUser>>(userData, options);
 
             if (users == null || users.Count == 0)
             {
-                Console.WriteLine("No users found in JSON file.");
                 return;
+            }
+            var roles = new List<AppRole>
+            {
+                new() {Name="Member"},
+                new() {Name="Admin"},
+                new() {Name="Moderator"}
+            };
+            foreach (var role in roles) 
+            {
+                await roleManager.CreateAsync(role);
             }
 
             foreach (var user in users)
             {
-                using var hmac = new HMACSHA512();
-                user.Username = user.Username;
-                user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("Admin123"));
-                user.PasswordSalt = hmac.Key;
-
-                Console.WriteLine($"Adding user: {user.Username}");
-
-                context.Users.Add(user);
+                user.UserName = user.UserName!.ToLower();
+                await userManager.CreateAsync(user, "Admin123");
+                await userManager.AddToRoleAsync(user, "Member");
             }
 
-            await context.SaveChangesAsync();
-            Console.WriteLine("Users successfully seeded!");
+            var admin = new AppUser
+            {
+                UserName = "admin",
+                KnownAs = "admin",
+                Gender = "",
+                City = "",
+                Country = "",
+            };
+
+            await userManager.CreateAsync(admin, "Admin123");
+            await userManager.AddToRolesAsync(admin, ["Admin", "Moderator"]);
+            
         }
 
     }

@@ -42,7 +42,7 @@ try
     var context = services.GetRequiredService<AppDbContext>();
     await context.Database.MigrateAsync();
     Console.WriteLine("Database migration applied successfully.");
-    await Seed.SeedUsers(context); // 🔹 Seeding users
+    await Seed.SeedUsers(context); 
 }
 catch (Exception ex)
 {

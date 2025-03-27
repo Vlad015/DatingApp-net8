@@ -13,7 +13,7 @@ public class AppUser
     public byte[] PasswordSalt { get; set; } = [];
     public DateOnly DateOfBirth { get; set; }
     public required string KnownAs { get; set; }
-    public DateTime Created { get; set; }= DateTime.UtcNow;
+    public DateTime Created { get; set; } = DateTime.UtcNow;
     public DateTime LastActive { get; set; } = DateTime.UtcNow;
     public required string Gender { get; set; }
 
@@ -25,6 +25,8 @@ public class AppUser
     public List<Photo> Photos { get; set; } = [];
     public List<UserLike> LikedByUsers { get; set; } = [];
     public List<UserLike> LikedUsers { get; set; } = [];
+    public List<Message> MessagesSent { get; set; } = [];
+    public List<Message> MessagesReceived { get; set; } = [];
 
 
 }

@@ -13,11 +13,15 @@ namespace API.Extensions
 
             return username;
         }
-        public static int GetUserId(this ClaimsPrincipal user)
+        public static int? GetUserId(this ClaimsPrincipal user)
         {
-            var userId =int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier));
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            return userId;
+            if (string.IsNullOrEmpty(userIdClaim))
+                return null; 
+
+            return int.TryParse(userIdClaim, out var userId) ? userId : null;
         }
+
     }
 }

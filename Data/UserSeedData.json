@@ -1,6 +1,7 @@
 [
   {
     "Username": "Isabel",
+    "Email": "isabel@seed.com",
     "Gender": "female",
     "DateOfBirth": "1970-10-17",
     "KnownAs": "Isabel",
@@ -20,6 +21,7 @@
   },
   {
     "Username": "Daphne",
+    "Email": "daphne@seed.com",
     "Gender": "female",
     "DateOfBirth": "1980-09-30",
     "KnownAs": "Daphne",
@@ -39,6 +41,7 @@
   },
   {
     "Username": "Blanche",
+    "Email": "blanche@seed.com",
     "Gender": "female",
     "DateOfBirth": "1999-09-24",
     "KnownAs": "Blanche",
@@ -58,6 +61,7 @@
   },
   {
     "Username": "April",
+    "Email": "april@seed.com",
     "Gender": "female",
     "DateOfBirth": "1976-07-22",
     "KnownAs": "April",
@@ -77,6 +81,7 @@
   },
   {
     "Username": "Lindsay",
+    "Email": "lindsay@seed.com",
     "Gender": "female",
     "DateOfBirth": "1989-10-15",
     "KnownAs": "Lindsay",
@@ -96,6 +101,7 @@
   },
   {
     "Username": "Bernard",
+    "Email": "bernard@seed.com",
     "Gender": "male",
     "DateOfBirth": "1985-01-20",
     "KnownAs": "Bernard",
@@ -115,6 +121,7 @@
   },
   {
     "Username": "Dawson",
+    "Email": "dawson@seed.com",
     "Gender": "male",
     "DateOfBirth": "1996-02-22",
     "KnownAs": "Dawson",
@@ -134,6 +141,7 @@
   },
   {
     "Username": "Hart",
+    "Email": "hart@seed.com",
     "Gender": "male",
     "DateOfBirth": "1991-04-07",
     "KnownAs": "Hart",
@@ -153,6 +161,7 @@
   },
   {
     "Username": "Holloway",
+    "Email": "holloway@seed.com",
     "Gender": "male",
     "DateOfBirth": "1971-10-06",
     "KnownAs": "Holloway",
@@ -172,6 +181,7 @@
   },
   {
     "Username": "Torres",
+    "Email": "torres@seed.com",
     "Gender": "male",
     "DateOfBirth": "1984-03-11",
     "KnownAs": "Torres",

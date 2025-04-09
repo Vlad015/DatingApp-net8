@@ -20,7 +20,7 @@ namespace API.Extensions
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
 
-                // 🔹 Enable JWT Authentication in Swagger
+                
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "Enter 'Bearer YOUR_TOKEN' (without quotes) in the field below.",
@@ -61,17 +61,6 @@ namespace API.Extensions
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["TokenKey"]!));
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = key,
-                        ValidateIssuer = false,
-                        ValidateAudience = false
-                    };
-                });
             services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
             return services;
         }

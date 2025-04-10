@@ -2,6 +2,7 @@
 using API.Helpers;
 using API.Interfaces;
 using API.Services;
+using API.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -62,6 +63,8 @@ namespace API.Extensions
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["TokenKey"]!));
 
             services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
+            services.AddSignalR();
+            services.AddSingleton<PresenceTracker>();
             return services;
         }
     }

@@ -14,15 +14,13 @@ namespace API.Extensions
     {
         public static IServiceCollection AddIdentityServices(this IServiceCollection services, IConfiguration config)
         {
-            services.AddIdentityCore<AppUser>(opt =>
-            {
-                opt.Password.RequireNonAlphanumeric = false;
-            })
-            .AddRoles<AppRole>()
-            .AddRoleManager<RoleManager<AppRole>>()
-            .AddUserManager<UserManager<AppUser>>()
-            .AddEntityFrameworkStores<AppDbContext>()
-            .AddSignInManager<SignInManager<AppUser>>();
+            services.AddIdentityCore<AppUser>(opt => { /* options */ })
+                .AddRoles<AppRole>()
+                .AddRoleManager<RoleManager<AppRole>>()
+                .AddUserManager<UserManager<AppUser>>()
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddSignInManager<SignInManager<AppUser>>()
+                .AddDefaultTokenProviders();
 
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

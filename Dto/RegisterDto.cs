@@ -9,6 +9,8 @@ namespace API.NewFolder
 
         [Required]
         public string? KnownAs {  get; set; }
+        [Required]
+        public string? Email { get; set; } =string.Empty;
 
         [Required]
         public string? Gender { get; set; }

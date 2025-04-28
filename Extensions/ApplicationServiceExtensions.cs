@@ -58,6 +58,8 @@ namespace API.Extensions
             services.AddScoped<IMessageRepository, MessageRepository>();
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<UserActivity>();
+            services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
+            services.AddScoped<IEmailService, EmailService>();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["TokenKey"]!));

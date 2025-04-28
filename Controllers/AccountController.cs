@@ -15,7 +15,7 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AccountController(UserManager<AppUser> userManager, ITokenService tokenService, IMapper mapper) : ControllerBase
+    public class AccountController(UserManager<AppUser> userManager, ITokenService tokenService, IMapper mapper, IEmailService emailService) : ControllerBase
     {
         [HttpPost("register")]// account/register
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
@@ -26,6 +26,7 @@ namespace API.Controllers
             var user = mapper.Map<AppUser>(registerDto);
 
             user.UserName = registerDto.Username.ToLower();
+            user.Email = registerDto.Email.ToLower();
 
             var result = await userManager.CreateAsync(user, registerDto.Password);
             if (!result.Succeeded)
@@ -52,11 +53,17 @@ namespace API.Controllers
                 .Include(u => u.Photos)
                 .FirstOrDefaultAsync(u => u.NormalizedUserName == loginDto.Username.ToUpper());
 
-            if (user == null || user.UserName == null) return Unauthorized("Invalid username");
+            if (user == null || user.UserName == null)
+                return Unauthorized("Invalid username");
+
+            var signInManager = HttpContext.RequestServices.GetRequiredService<SignInManager<AppUser>>();
+
+            var result = await signInManager.CheckPasswordSignInAsync(user, loginDto.Password, lockoutOnFailure: false);
+
+            if (!result.Succeeded)
+                return Unauthorized("Invalid password");
 
             var roles = await userManager.GetRolesAsync(user);
-
-
 
             return new UserDto
             {
@@ -67,5 +74,41 @@ namespace API.Controllers
                 PhotoUrl = user.Photos?.FirstOrDefault(x => x.IsMain)?.Url
             };
         }
+
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult> ForgotPassword(ForgotPasswordDto dto)
+        {
+            var user = await userManager.FindByEmailAsync(dto.Email);
+            if (user == null) return BadRequest("No user found");
+
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+
+            var resetLink = $"https://localhost:4200/reset-password?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(user.Email)}";
+
+            await emailService.SendEmailAsync(dto.Email, "Reset your password", $"Click <a href='{resetLink}'>here</a> to reset your password");
+
+            return Ok(new { message = "Reset link sent" });
+        }
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
+        {
+            var user = await userManager.FindByEmailAsync(dto.Email);
+            if (user == null) return BadRequest("Invalid request");
+
+            
+
+            var result = await userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                var errorMessages = result.Errors.Select(e => e.Description).ToArray();
+                return BadRequest(new { errors = errorMessages });
+            }
+            await userManager.UpdateSecurityStampAsync(user);
+
+            return Ok(new { message = "Password has been reset successfully." });
+        }
+
+
     }
 }

@@ -17,22 +17,27 @@ namespace API.Controllers
     [Route("api/[controller]")]
     public class AccountController(UserManager<AppUser> userManager, ITokenService tokenService, IMapper mapper, IEmailService emailService) : ControllerBase
     {
-        [HttpPost("register")]// account/register
-        public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
+        [HttpPost("register")]
+        public async Task<ActionResult<UserDto>> Register([FromBody] RegisterDto registerDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); 
+            }
+
             if (await UserExists(registerDto.Username))
                 return BadRequest("Username is taken");
 
             var user = mapper.Map<AppUser>(registerDto);
-
             user.UserName = registerDto.Username.ToLower();
             user.Email = registerDto.Email.ToLower();
 
             var result = await userManager.CreateAsync(user, registerDto.Password);
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors);
+                return BadRequest(result.Errors); 
             }
+
             return new UserDto
             {
                 Username = user.UserName,

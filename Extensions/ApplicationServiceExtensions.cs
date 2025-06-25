@@ -51,7 +51,24 @@ namespace API.Extensions
             {
                 opt.UseSqlServer(config.GetConnectionString("SqlServerConnStr"));
             });
-            services.AddCors();
+            services.AddCors(options =>
+            {
+                options.AddPolicy("DevCorsPolicy", policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+
+                options.AddPolicy("ProdCorsPolicy", policy =>
+                {
+                    policy.WithOrigins("https://app.datingapp.com") // your deployed frontend
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ILikesRepository, LikesRepository>();

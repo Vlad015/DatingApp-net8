@@ -83,5 +83,13 @@ namespace API.Controllers
                 return Ok();
             return BadRequest();
         }
+        [HttpGet("latest")]
+        public async Task<ActionResult<IEnumerable<LatestMessageDto>>> GetLatestMessages()
+        {
+            var currentUsername = User.GetUsername(); 
+            var messages = await messageRepository.GetLatestMessageForUser(currentUsername);
+
+            return Ok(messages);
+        }
     }
 }

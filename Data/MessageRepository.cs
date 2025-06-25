@@ -103,5 +103,36 @@ namespace API.Data
         {
             return await context.SaveChangesAsync() > 0;
         }
+
+        public async Task<IEnumerable<LatestMessageDto>> GetLatestMessageForUser(string username)
+        {
+            var messages = await context.Messages
+                .Where(m => m.SenderUsername == username || m.RecipientUsername == username)
+                .OrderByDescending(m => m.MessageSent)
+                .Include(m => m.Sender).ThenInclude(p => p.Photos)
+                .Include(m => m.Recipient).ThenInclude(p => p.Photos)
+                .ToListAsync(); // ⚠️ mutăm în memorie
+
+            var latestMessages = messages
+                .Select(m => new
+                {
+                    Message = m,
+                    OtherUsername = m.SenderUsername == username ? m.RecipientUsername : m.SenderUsername
+                })
+                .GroupBy(x => x.OtherUsername)
+                .Select(g => g.First())
+                .Select(x => new LatestMessageDto
+                {
+                    Username = x.OtherUsername,
+                    PhotoUrl = x.Message.SenderUsername == username
+                        ? x.Message.Recipient.Photos.FirstOrDefault(p => p.IsMain)?.Url
+                        : x.Message.Sender.Photos.FirstOrDefault(p => p.IsMain)?.Url,
+                    LastMessageContent = x.Message.Content,
+                    LastMessageSent = x.Message.MessageSent
+                });
+
+            return latestMessages;
+        }
+
     }
 }

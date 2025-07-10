@@ -1,4 +1,5 @@
 ﻿using API.Controllers;
+using API.Dto;
 using API.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -19,13 +20,14 @@ public class AdminController : BaseApiController
         _userManager = userManager;
     }
 
-    [Authorize(Roles = "Admin")]
+    
     [HttpGet("users-with-roles")]
     public async Task<ActionResult> GetUsersWithRoles()
     {
         var users = await _userManager.Users
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
+            .Include(u=>u.Photos)
             .OrderBy(x => x.UserName)
             .ToListAsync();
 
@@ -33,7 +35,8 @@ public class AdminController : BaseApiController
         {
             x.Id,
             Username = x.UserName,
-            Roles = x.UserRoles.Select(r => r.Role.Name).ToList()
+            Roles = x.UserRoles.Select(r => r.Role.Name).ToList(),
+            PhotoUrl=x.Photos.FirstOrDefault(p=>p.IsMain)?.Url
         }).ToList();
 
         return Ok(result);
@@ -47,19 +50,27 @@ public class AdminController : BaseApiController
         return Ok("Admins or moderators can see this");
     }
     [Authorize]
-    [HttpGet("debug-token")]
-    public IActionResult DebugToken()
+    [HttpGet("user-photos/{username}")]
+    public async Task<ActionResult> GetUsersPhotosByUsername(string username)
     {
-        var identity = HttpContext.User.Identity as ClaimsIdentity;
-        if (identity == null)
+        var user = await _userManager.Users
+            .Include(u => u.Photos)
+            .FirstOrDefaultAsync(u=>u.UserName==username);
+        if(user==null) return NotFound("User Not Found!");
+
+        var photos = user.Photos.Select(user => new PhotoDto1
         {
-            return Unauthorized("No identity found");
-        }
+            Id = user.Id,
+            Url = user.Url,
+            IsMain = user.IsMain,
+            Username=username,
+        }).ToList();
 
-        var claims = identity.Claims.Select(c => new { c.Type, c.Value }).ToList();
-
-        return Ok(new { claims });
+        return Ok(photos);
+            
     }
+
+    
     [Authorize(Roles = "Admin")]
     [HttpPost("edit-roles/{username}")]
     public async Task<IActionResult>EditRoles(string username, string roles)

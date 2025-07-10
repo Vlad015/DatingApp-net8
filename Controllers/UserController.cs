@@ -114,5 +114,25 @@ namespace API.Controllers
             return BadRequest("Problem deleting photo");
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("delete-photo1/{username}/{photoId}")]
+        public async Task<ActionResult> Deletephoto1(int photoId, string username)
+        {
+            var user = await userRepository.GetUserByUsernameAsync(username);
+            if (user == null) return BadRequest("User not found");
+            var photo = user.Photos.FirstOrDefault(x => x.Id == photoId);
+            if (photo == null) { return BadRequest("This photo cannot be deleted because it doesn't exist"); }
+            if (photo.PublicId != null)
+            {
+                var result = await photoService.DeletePhotoAsync(photo.PublicId);
+                if (result.Error != null) return BadRequest(result.Error.Message);
+            }
+            user.Photos.Remove(photo);
+            if (await userRepository.SaveAllAsync())
+                return Ok("Photo deleted successfully" );
+
+            return BadRequest("Problem deleting photo");
+        }
+
     }
 }

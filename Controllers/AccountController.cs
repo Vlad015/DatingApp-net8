@@ -90,7 +90,10 @@ namespace API.Controllers
 
             var resetLink = $"https://localhost:4200/reset-password?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(user.Email)}";
 
-            await emailService.SendEmailAsync(dto.Email, "Reset your password", $"Click <a href='{resetLink}'>here</a> to reset your password");
+            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "EmailTemplate.html");
+            var htmlBody = await System.IO.File.ReadAllTextAsync(templatePath);
+            htmlBody = htmlBody.Replace("{{resetLink}}", resetLink);
+            await emailService.SendEmailAsync(dto.Email, "Reset your password", htmlBody);
 
             return Ok(new { message = "Reset link sent" });
         }

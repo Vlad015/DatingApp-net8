@@ -8,9 +8,11 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace API.SignalR
 {
+    
     public class MessageHub(IMessageRepository messageRepository, IUserRepository userRepository, 
         IMapper mapper, IHubContext<PresenceHub> pressenceHub):Hub
     {
+
         public override async Task OnConnectedAsync()
         {
             var httpContext = Context.GetHttpContext();
@@ -73,6 +75,32 @@ namespace API.SignalR
 
             throw new HubException("Failed to save message");
         }
+        public async Task UpdateMessage(UpdateMessageDto dto)
+        {
+            var message = await messageRepository.GetMessage(dto.MessageId);
+            var username = Context.User?.GetUsername() ?? throw new HubException("Unauthorized");
+            if (message == null)
+                throw new HubException("Message not found");
+            if (message.SenderUsername != username)
+                throw new HubException("You can only edit your own messages");
+
+            message.Content = dto.NewContent;
+            message.Edited = true;
+            message.UpdatedDate = DateTime.UtcNow;
+
+            if (!await messageRepository.SaveAllAsync())
+                throw new HubException("Failed to update message");
+            var groupName = GetGroupName(message.SenderUsername, message.RecipientUsername);
+
+            await Clients.Group(groupName).SendAsync("MessageUpdated", new
+            {
+                message.Id,
+                message.Content,
+                message.MessageSent,
+                message.Edited,
+                message.UpdatedDate
+            });
+        }
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var group=await RemoveFromMessageGroup();
@@ -94,6 +122,44 @@ namespace API.SignalR
             if(await messageRepository.SaveAllAsync())return group;
             throw new HubException("Failed to join group");
         }
+        public async Task DeleteMessage(int messageId)
+        {
+            var username = Context.User?.GetUsername() ?? throw new HubException("Cannot identify user");
+
+            var message = await messageRepository.GetMessage(messageId);
+
+            if (message == null || (message.SenderUsername != username && message.RecipientUsername != username))
+                throw new HubException("Unauthorized");
+
+            
+            if (message.SenderUsername == username)
+            {
+                message.SenderDeleted = true;
+                message.RecipientDeleted = true;
+            }
+
+            if (message.SenderDeleted && message.RecipientDeleted)
+                Console.WriteLine(">>> BOTH deleted — performing hard delete!");
+                messageRepository.DeleteMessage(message);
+
+            if (!await messageRepository.SaveAllAsync())
+                throw new HubException("Problem deleting message");
+
+            var senderUsername = message.SenderUsername;
+            var recipientUsername = message.RecipientUsername;
+
+            var groupName = GetGroupName(senderUsername, recipientUsername);
+
+            await Clients.Group(groupName).SendAsync("MessageDeleted", messageId);
+
+            var updatedThreadForSender = await messageRepository.GetMessageThread(senderUsername, recipientUsername);
+            var updatedThreadForRecipient = await messageRepository.GetMessageThread(recipientUsername, senderUsername);
+
+            await Clients.Group(groupName).SendAsync("ReceiveMessageThread", updatedThreadForSender);
+            await Clients.User(recipientUsername).SendAsync("ReceiveMessageThread", updatedThreadForRecipient);
+        }
+
+
 
         private async Task<Group> RemoveFromMessageGroup()
         {

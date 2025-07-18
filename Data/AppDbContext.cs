@@ -14,6 +14,7 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<AppUser,
     public DbSet<Message> Messages { get; set; }
     public DbSet<Group> Groups { get; set; }
     public DbSet<Connection> Connections { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -32,6 +33,7 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<AppUser,
             .HasForeignKey(ur => ur.UserId)
             .IsRequired();
 
+        
         modelBuilder.Entity<AppRole>()
             .HasMany(r => r.UserRoles)
             .WithOne(ur => ur.Role)

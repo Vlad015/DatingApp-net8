@@ -22,6 +22,7 @@ namespace API.Data
 
         public void DeleteMessage(Message message)
         {
+            Console.WriteLine(">>> Deleting message from DB: " + message.Id);
             context.Messages.Remove(message);
         }
 
@@ -73,10 +74,9 @@ namespace API.Data
         {
             var messages = await context.Messages
                 .Where(x =>
-                    x.RecipientUsername == currentUsername && x.RecipientDeleted == false
-                    && x.SenderUsername == recipientUsername ||
-                    x.SenderUsername == currentUsername && x.SenderDeleted == false
-                    && x.RecipientUsername == recipientUsername
+                    (x.RecipientUsername == currentUsername && x.RecipientDeleted == false && x.SenderUsername == recipientUsername)
+                    ||
+                    (x.SenderUsername == currentUsername && x.SenderDeleted == false && x.RecipientUsername == recipientUsername)
                 )
                 .OrderBy(x => x.MessageSent)
                 .ProjectTo<MessageDto>(mapper.ConfigurationProvider)

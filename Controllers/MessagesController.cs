@@ -83,6 +83,7 @@ namespace API.Controllers
                 return Ok();
             return BadRequest();
         }
+
         [HttpGet("latest")]
         public async Task<ActionResult<IEnumerable<LatestMessageDto>>> GetLatestMessages()
         {

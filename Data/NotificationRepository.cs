@@ -26,6 +26,7 @@ namespace API.Data
                 .OrderByDescending(n => n.DateSent)
                 .Select(n => new NotificationDto
                 {
+                    Id = n.Id,
                     Content = n.Content,
                     DateSent = n.DateSent,
                     RecipientUsername=n.RecipientUsername

@@ -51,7 +51,7 @@ namespace API.Controllers
             if (!await notificationRepository.SaveAllAsync())
                 return BadRequest("Problem deleting message");
 
-            return Ok("Notification deleted succesfully");
+            return Ok("Notification has been deleted succesfully");
 
         }
         [HttpGet]

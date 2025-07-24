@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 namespace API.SignalR
 {
     
-    public class MessageHub(IMessageRepository messageRepository, IUserRepository userRepository, 
+    public class MessageHub(IMessageRepository messageRepository, IUserRepository userRepository,INotificationRepository notificationRepository, 
         IMapper mapper, IHubContext<PresenceHub> pressenceHub):Hub
     {
 
@@ -21,10 +21,13 @@ namespace API.SignalR
             {
                 throw new HubException("Cannot join group");
             }
+            var currentUsername = Context.User.GetUsername();
             var groupName = GetGroupName(Context.User.GetUsername(), otherUser);
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
             var group=await AddToGroup(groupName);
+            
 
+            PresenceTracker.SetUserChattingWith(currentUsername, otherUser!);
             await Clients.Group(groupName).SendAsync("UpdatedGroup", group);
 
             var messages = await messageRepository.GetMessageThread(Context.User.GetUsername(), otherUser!);
@@ -40,7 +43,7 @@ namespace API.SignalR
             var recipient = await userRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername);
 
             if (recipient == null || sender == null)
-                throw new HubException("You cannot send message at this time");
+                throw new HubException("The group cannot be identified");
             var message = new Message
             {
                 Sender = sender,
@@ -66,10 +69,33 @@ namespace API.SignalR
                 }
             }
                 messageRepository.AddMessage(message);
+            
 
             if (await messageRepository.SaveAllAsync())
             {
                 await Clients.Group(groupName).SendAsync("NewMessage", mapper.Map<MessageDto>(message));
+
+                var recipientConnections = await PresenceTracker.GetConnectionsForUser(recipient.UserName);
+                bool recipientIsOnline = recipientConnections != null && recipientConnections.Count > 0;
+                bool recipientIsNotChatting = !PresenceTracker.IsUserChattingWith(recipient.UserName, sender.UserName);
+
+                if (recipientIsOnline && recipientIsNotChatting)
+                {
+                    var notification = new Notification
+                    {
+                        AppUserId = recipient.Id,
+                        RecipientUsername = recipient.UserName,
+                        Content = $"{sender.KnownAs} has sent you a message.",
+                        DateSent = DateTime.UtcNow
+                    };
+                    
+                    notificationRepository.AddNotification(notification);
+                    await notificationRepository.SaveAllAsync();
+
+                    await Clients.Clients(recipientConnections)
+                        .SendAsync("NewMessageNotification", notification.Content);
+                }
+
                 return;
             }
 
@@ -103,6 +129,11 @@ namespace API.SignalR
         }
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
+            var username = Context.User?.GetUsername();
+            if (!string.IsNullOrEmpty(username))
+            {
+                PresenceTracker.ClearUserChattingWith(username);
+            }
             var group=await RemoveFromMessageGroup();
             await Clients.Group(group.Name).SendAsync("updatedGroup", group);
             await base.OnDisconnectedAsync(exception);
@@ -158,6 +189,8 @@ namespace API.SignalR
             await Clients.Group(groupName).SendAsync("ReceiveMessageThread", updatedThreadForSender);
             await Clients.User(recipientUsername).SendAsync("ReceiveMessageThread", updatedThreadForRecipient);
         }
+        
+
 
 
 

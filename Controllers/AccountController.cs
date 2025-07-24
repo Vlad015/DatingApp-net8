@@ -29,13 +29,24 @@ namespace API.Controllers
                 return BadRequest("Username is taken");
 
             var user = mapper.Map<AppUser>(registerDto);
+            registerDto.Username = registerDto.Username.Trim();
             user.UserName = registerDto.Username.ToLower();
             user.Email = registerDto.Email.ToLower();
 
             var result = await userManager.CreateAsync(user, registerDto.Password);
+            await userManager.AddToRolesAsync(user, new[] { "Member" });
+
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors); 
+                return BadRequest(new
+                {
+                    errors = result.Errors.Select(e => e.Description).ToList()
+                });
+
+            }
+            foreach (var error in result.Errors)
+            {
+                Console.WriteLine($" {error.Code}: {error.Description}");
             }
 
             return new UserDto
@@ -43,7 +54,9 @@ namespace API.Controllers
                 Username = user.UserName,
                 Token = await tokenService.CreateToken(user),
                 Gender = user.Gender,
-                KnownAs = user.KnownAs
+                KnownAs = user.KnownAs,
+
+
             };
         }
 

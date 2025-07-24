@@ -3,6 +3,8 @@
     public class PresenceTracker
     {
         private static readonly Dictionary<string, List<string>> OnlineUsers = [];
+        private static readonly Dictionary<string, string> UserChatStates = new();
+
 
         public Task<bool> UserConnected(string username, string connectionId)
         {
@@ -64,5 +66,31 @@
             }
             return Task.FromResult(connectionIds);
         }
+        public static Task SetUserChattingWith(string username, string chattingWith)
+        {
+            lock (UserChatStates)
+            {
+                UserChatStates[username] = chattingWith;
+            }
+            return Task.CompletedTask;
+        }
+
+        public static Task ClearUserChattingWith(string username)
+        {
+            lock (UserChatStates)
+            {
+                UserChatStates.Remove(username);
+            }
+            return Task.CompletedTask;
+        }
+
+        public static bool IsUserChattingWith(string username, string targetUser)
+        {
+            lock (UserChatStates)
+            {
+                return UserChatStates.TryGetValue(username, out var current) && current == targetUser;
+            }
+        }
+
     }
 }

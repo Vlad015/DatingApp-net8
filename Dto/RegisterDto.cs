@@ -16,7 +16,7 @@ namespace API.NewFolder
         public string? Gender { get; set; }
 
         [Required]
-        public string? DateOfBirth { get; set; }
+        public DateOnly? DateOfBirth { get; set; }
 
         [Required]
         public string? City { get; set; }

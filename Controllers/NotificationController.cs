@@ -24,6 +24,7 @@ namespace API.Controllers
             if (recipient == null) return NotFound();
             var notification = new Notification
             {
+                Id = dto.Id,
                 Content = dto.Content,
                 RecipientUsername = dto.RecipientUsername,
                 AppUserId=recipient.Id,

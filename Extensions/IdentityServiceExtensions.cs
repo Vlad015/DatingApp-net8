@@ -3,6 +3,7 @@ using API.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -16,11 +17,15 @@ namespace API.Extensions
         {
             services.AddIdentityCore<AppUser>(opt =>
             {
+                opt.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_ ";
+                opt.User.RequireUniqueEmail = true;
+
                 opt.Password.RequireDigit = true;
                 opt.Password.RequireLowercase = true;
                 opt.Password.RequireUppercase = true;
-                opt.Password.RequireNonAlphanumeric = false; // ← aceasta e cheia
+                opt.Password.RequireNonAlphanumeric = false;
                 opt.Password.RequiredLength = 6;
+
             })
             .AddRoles<AppRole>()
             .AddRoleManager<RoleManager<AppRole>>()
@@ -28,7 +33,11 @@ namespace API.Extensions
             .AddEntityFrameworkStores<AppDbContext>()
             .AddSignInManager<SignInManager<AppUser>>()
             .AddDefaultTokenProviders();
-
+            services.Configure<IdentityOptions>(options =>
+            {
+                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_ ";
+                options.User.RequireUniqueEmail = true;
+            });
 
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

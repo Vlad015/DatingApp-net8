@@ -16,7 +16,7 @@ namespace API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class UserController(IUserRepository userRepository, IMapper mapper,
+    public class UserController(IUserRepository userRepository, IMapper mapper,INotificationRepository notificationRepository,
         IPhotoService photoService) : BaseApiController
     {
         [HttpGet]
@@ -113,26 +113,41 @@ namespace API.Controllers
 
             return BadRequest("Problem deleting photo");
         }
-
         [Authorize(Roles = "Admin")]
-        [HttpDelete("delete-photo1/{username}/{photoId}")]
-        public async Task<ActionResult> Deletephoto1(int photoId, string username)
+        [HttpPost("delete-photo-with-reason")]
+        public async Task<ActionResult> DeletePhotoWithReason([FromBody] DeletePhotoWithReasonDto dto)
         {
-            var user = await userRepository.GetUserByUsernameAsync(username);
+            var user = await userRepository.GetUserByUsernameAsync(dto.Username);
             if (user == null) return BadRequest("User not found");
-            var photo = user.Photos.FirstOrDefault(x => x.Id == photoId);
-            if (photo == null) { return BadRequest("This photo cannot be deleted because it doesn't exist"); }
+
+            var photo = user.Photos.FirstOrDefault(x => x.Id == dto.PhotoId);
+            if (photo == null) return BadRequest("Photo not found");
+
             if (photo.PublicId != null)
             {
                 var result = await photoService.DeletePhotoAsync(photo.PublicId);
                 if (result.Error != null) return BadRequest(result.Error.Message);
             }
+
             user.Photos.Remove(photo);
+
+            var notification = new Notification
+            {
+                AppUserId = user.Id,
+                RecipientUsername = dto.Username,
+                Content = $"Photo has been removed because {dto.Reason}",
+                DateSent = DateTime.UtcNow
+            };
+
+            notificationRepository.AddNotification(notification);
+            await notificationRepository.SaveAllAsync();
+
             if (await userRepository.SaveAllAsync())
-                return Ok("Photo deleted successfully" );
+                return Ok("Photo deleted and reason sent");
 
             return BadRequest("Problem deleting photo");
         }
+
 
     }
 }

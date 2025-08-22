@@ -135,17 +135,15 @@ namespace API.Controllers
             {
                 AppUserId = user.Id,
                 RecipientUsername = dto.Username,
-                Content = $"Photo has been removed because {dto.Reason}",
+                Content = $"Your photo has been removed because {dto.Reason}",
                 DateSent = DateTime.UtcNow
             };
 
             notificationRepository.AddNotification(notification);
-            await notificationRepository.SaveAllAsync();
+            if(await notificationRepository.SaveAllAsync())
+              return Ok(new {message= "Photo deleted and reason sent" });
+            return NoContent();
 
-            if (await userRepository.SaveAllAsync())
-                return Ok("Photo deleted and reason sent");
-
-            return BadRequest("Problem deleting photo");
         }
 
 

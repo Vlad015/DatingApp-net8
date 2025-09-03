@@ -50,11 +50,26 @@ namespace API.Controllers
             notificationRepository.DeleteNotification(notification);
 
             if (!await notificationRepository.SaveAllAsync())
-                return BadRequest("Problem deleting message");
+                return BadRequest("Problem deleting notification");
 
-            return Ok("Notification has been deleted succesfully");
-
+            return Ok(new {message= "Notification has been deleted succesfully" });
         }
+
+        [HttpDelete("delete-all-notifications")]
+        public async Task<IActionResult> DeleteAllNotifications()
+        {
+            var username = User.GetUsername();
+            if (username == null)
+                throw new Exception("Username cannot be found");
+
+            var deleted = await notificationRepository.DeleteByUsernameAsync(username);
+
+            return Ok(new
+            {
+                message = "All notifications have been deleted"
+            });
+        }
+
         [HttpGet]
         public async Task<ActionResult> GetMyNotifications()
         {

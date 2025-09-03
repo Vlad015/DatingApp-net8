@@ -45,5 +45,23 @@ namespace API.Data
         {
             return await context.Notifications.FindAsync(id);
         }
+
+        public async Task<List<Notification>> DeleteByUsernameAsync(string username)
+        {
+            var items = await context.Notifications
+                .IgnoreQueryFilters()
+                .Where(n => n.RecipientUsername != null &&
+                            n.RecipientUsername.Trim().ToLower() == username.Trim().ToLower())
+                .ToListAsync();
+
+
+            if (items.Any())
+            {
+            context.Notifications.RemoveRange(items);
+            await context.SaveChangesAsync();
+            }
+            return items;
+        }
+        
     }
 }

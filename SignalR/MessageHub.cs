@@ -79,7 +79,7 @@ namespace API.SignalR
                 bool recipientIsOnline = recipientConnections != null && recipientConnections.Count > 0;
                 bool recipientIsNotChatting = !PresenceTracker.IsUserChattingWith(recipient.UserName, sender.UserName);
 
-                if (recipientIsOnline && recipientIsNotChatting)
+                if (recipientIsOnline && recipientIsNotChatting|| !recipientIsOnline)
                 {
                     var notification = new Notification
                     {

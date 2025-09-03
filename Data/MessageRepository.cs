@@ -111,7 +111,7 @@ namespace API.Data
                 .OrderByDescending(m => m.MessageSent)
                 .Include(m => m.Sender).ThenInclude(p => p.Photos)
                 .Include(m => m.Recipient).ThenInclude(p => p.Photos)
-                .ToListAsync(); // ⚠️ mutăm în memorie
+                .ToListAsync(); 
 
             var latestMessages = messages
                 .Select(m => new

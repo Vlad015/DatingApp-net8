@@ -8,5 +8,6 @@
         public int AppUserId { get; set; } 
         public AppUser? Recipient { get; set; }
         public string? RecipientUsername { get; set; }
+        public string? SenderUsername { get; set; }
     }
 }

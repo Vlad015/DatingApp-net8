@@ -9,6 +9,7 @@ namespace API.Interfaces
         void DeleteNotification(Notification notification);
         Task<IEnumerable<NotificationDto>> GetNotificationThread(string username);
         Task<Notification?> GetNotificationById(int id);
+        Task<List<Notification?>> DeleteByUsernameAsync(string username);
         Task<bool> SaveAllAsync();
 
 

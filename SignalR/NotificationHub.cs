@@ -18,6 +18,7 @@ namespace API.SignalR
             {
                 Content = dto.Content,
                 Recipient = recipient,
+                
 
             };
         }
